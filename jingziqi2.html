@@ -1,0 +1,688 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 1.0 Transitional//EN"
+"http://www.w3.org/TR/DTD/xhtml1-transitional.dtd>
+<html xmlns="www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=gb2312"/>
+<title>井字过三关</title>
+<style>
+#main{width:600px;height:500px;border-style:solid;border-width:1px;margin:0px auto;padding:50px;}
+.playground{width:120px;height:120px;float:left;border-style:solid;border-width:1px;}
+#area{width:400px;height:400px;border-style:solid;border-width:1px;}
+body{border-style:solid;border-width:1px;}
+#start{position:relative;left:500px;top:-90px;font-size:30px;}
+#choice{width:150px;height:150px;border-style:solid;border-width:1px;position:relative;left:450px;top:-350px;}
+.playground img{display:block;margin:20px auto;}
+</style>
+<script>
+
+window.onload=function(){
+var oG=document.getElementsByClassName('playground');
+var actionPlayer;     //标识改步行动的玩家，1代表人，2代表电脑
+var start=false;            //标识游戏开始与结束，false代表结束，true代表开始
+var difficulty;       //标识游戏难度，1代表容易，2代表困难
+var order;            //标识先后手，1代表先手，2代表后手
+var easy=document.getElementById('easy');
+var hard=document.getElementById('hard');
+var first=document.getElementById('first');
+var second=document.getElementById('second');
+var firststep;    //第一步
+var laststep;     //上一步
+var step;          //回合数
+var angle=[0,2,6,8];   //角编号数组
+var edge=[1,3,5,7];    //边编号数组
+ 
+
+for(var i=0;i<oG.length;i++){
+oG[i].key=i;  //方框的编号
+oG[i].isFull=false;   //方框内是否被对象占据
+oG[i].number=0;      //方框中玩家的类型
+}
+
+var oStart=document.getElementById('start');
+oStart.onclick=function(){
+if(easy.checked==""&&hard.checked==""){
+alert("请选择难度");
+return;
+}
+if(first.checked==""&&second.checked==""){
+alert("请选择先后手");
+return;
+}
+if(easy.checked){
+difficulty=1;
+}else{difficulty=2;}
+if(first.checked){
+order=1;
+actionPlayer=1;
+}else{order=2;
+actionPlayer=2;}
+for(var i=0;i<oG.length;i++){
+oG[i].number=0;
+oG[i].isFull=false;
+if(oG[i].childNodes.length!=0){
+oG[i].removeChild(oG[i].childNodes[0]);
+}
+}
+
+start=true;
+step=1;
+
+var draw=function(nextStep){
+    var oPic1=document.createElement('img');
+    if(order==2){
+        oPic1.src="images/2.jpg";
+        oG[nextStep].number=2;
+	}
+    if(order==1){
+         oPic1.src="images/1.jpg";
+         oG[nextStep].number=2;
+	}
+    oG[nextStep].appendChild(oPic1);
+    oPic1.style.height='80px';
+    oPic1.style.width='80px';
+    oG[nextStep].isFull=true;
+};
+
+var anglefirst=function(obj){
+if(actionPlayer==2&&start==true){
+if(step==1){
+		draw(firststep);
+	}else if(step==3){
+		if(isAngle(laststep)){
+			if(laststep==8-firststep){
+				for(var i=0;i<angle.length;i++){
+					if(obj[angle[i]].number==0){
+						draw([angle[i]]);
+						break;
+					}
+				}
+			}else{
+				draw(8-firststep);
+			}
+		}else if(isEdge(laststep)){
+			draw(4);
+		}else{
+			draw(8-firststep);
+		}
+	}else if(step==5){
+		var winplace2=winplace(obj,2).place;
+		if(winplace2!=9){
+			draw(winplace2);
+		}else{
+			var winplace1=winplace(obj,1).place;
+			if(winplace1!=9){
+				draw(winplace1);
+			}else{
+				var winplaces=9;
+				var maxSum=0;
+				var next;
+				var nextstep2=9;
+				for(var i=0;i<obj.length;i++){
+					if(obj[i].number==0){
+						obj[i].number=2;
+						if(maxSum<winplace(obj,2).sum){
+							maxSum=winplace(obj,2).sum;
+							winplaces=winplace(obj,2).place;
+							nextstep2=i;
+							obj[i].number=0;
+						}
+						obj[i].number=0;
+					}
+				}
+				if(winplaces!=9){
+					draw(nextstep2);
+				}else{
+			var nextstep1=9;
+			for(var i=0;i<angle.length;i++){
+			if(obj[angle[i]].number==0){
+			nextstep1=angle[i];
+			break;
+			}
+			}
+			if(nextstep1!=9){
+			draw(nextstep1);
+			}else{
+			for(var i=0;i<edge.length;i++){
+			if(obj[edge[i]].number==0){
+			nextstep1=edge[i];
+			break;
+			}
+			}
+			if(nextstep1!=9){
+			draw(nextstep1);
+			}else{
+			draw(4);
+			}
+			}
+			}
+			}
+			
+		}
+	}else if(step==2){
+		if(isAngle(laststep)){
+			draw(4);
+		}else if(isEdge(laststep)){
+			draw(4);
+		}else{
+			var nextstep=angle[Math.floor(Math.random()*4)];
+			draw(nextstep);
+		}
+	}else{
+		var winplace2=winplace(obj,2).place;
+		if(winplace2!=9){
+			draw(winplace2);
+		}else{
+			var winplace1=winplace(obj,1).place;
+			if(winplace1!=9){
+				draw(winplace1);
+			}else{
+			    var edgeFull=0;
+				for(var i=0;i<edge.length;i++){
+				if(obj[edge[i]].number!=0){
+				edgeFull=1;
+				break;
+				}
+				}
+				if(edgeFull==0){
+				draw(edge[Math.floor(Math.random()*4)]);
+				}else{
+				var winplaces2=9;
+				var maxSum2=0;
+				var nextstep3=9;
+				for(var i=0;i<obj.length;i++){
+					if(obj[i].number==0){
+						obj[i].number=1;
+						if(maxSum2<winplace(obj,1).sum){
+							maxSum2=winplace(obj,1).sum;
+							winplaces2=winplace(obj,1).place;
+							nextstep3=i;
+							obj[i].number=0;
+						}
+						obj[i].number=0;
+					}
+				}
+				if(winplaces2!=9){
+					draw(nextstep3);
+				}else{
+					for(var i=0;i<angle.length;i++){
+						if(obj[angle[i]].number==0){
+							nextstep3=angle[i];
+							break;
+						}
+					}
+					if(nextstep3!=9){
+						draw(nextstep3);
+						}else{					
+							for(var i=0;i<edge.length;i++){
+								if(obj[edge[i]].number==0){
+									nextstep3=edge[i];
+									break;
+								}
+							}
+							if(nextstep3!=9){
+							draw(nextstep3);
+							}else{
+								draw(4);
+							}
+							
+						}
+					
+				}
+			}
+			}
+		}
+	}
+
+	if(isWin(oG)==true){
+start=false;
+tellWin(actionPlayer);
+}else{
+if(full(oG)==true){
+start=false;
+alert("棋逢对手，将遇良才，大家势均力敌");
+}else{
+actionPlayer=1;
+step++;
+}
+}
+}
+};
+
+
+var centrefirst=function(obj){
+if(actionPlayer==2&&start==true){
+if(step==1){
+		draw(firststep);
+	}else if(step==3){
+	if(isAngle(laststep)){
+	for(var i=0;i<angle.length;i++){
+	if(obj[angle[i]].number==0){
+	draw(angle[i]);
+	break;
+	}
+	}
+	}else{
+	if(laststep==1||laststep==3){
+	draw(0);
+	}else{
+	draw(8);
+	}
+	}
+	}else if(step==5){
+		var winplace2=winplace(obj,2).place;
+		if(winplace2!=9){
+			draw(winplace2);
+		}else{
+			var winplace1=winplace(obj,1).place;
+			if(winplace1!=9){
+				draw(winplace1);
+			}else{
+				var winplaces=9;
+				var maxSum=0;
+				var next;
+				var nextstep2=9;
+				for(var i=0;i<obj.length;i++){
+					if(obj[i].number==0){
+						obj[i].number=2;
+						if(maxSum<winplace(obj,2).sum){
+							maxSum=winplace(obj,2).sum;
+							winplaces=winplace(obj,2).place;
+							nextstep2=i;
+							obj[i].number=0;
+						}
+						obj[i].number=0;
+					}
+				}
+				if(winplaces!=9){
+					draw(nextstep2);
+				}else{
+			var nextstep1=9;
+			for(var i=0;i<angle.length;i++){
+			if(obj[angle[i]].number==0){
+			nextstep1=angle[i];
+			break;
+			}
+			}
+			if(nextstep1!=9){
+			draw(nextstep1);
+			}else{
+			for(var i=0;i<edge.length;i++){
+			if(obj[edge[i]].number==0){
+			nextstep1=edge[i];
+			break;
+			}
+			}
+			}
+			}
+			}
+			
+		}
+	}else if(step==2){
+		if(isAngle(laststep)){
+			draw(4);
+		}else if(isEdge(laststep)){
+			draw(4);
+		}else{
+			var nextstep=angle[Math.floor(Math.random()*4)];
+			draw(nextstep);
+		}
+	}else{
+		var winplace2=winplace(obj,2).place;
+		if(winplace2!=9){
+			draw(winplace2);
+		}else{
+			var winplace1=winplace(obj,1).place;
+			if(winplace1!=9){
+				draw(winplace1);
+			}else{
+			    var edgeFull=0;
+			    for(var i=0;i<edge.length;i++){
+				if(obj[edge[i]].number!=0){
+				edgeFull=1;
+				break;
+				}
+				}
+				if(edgeFull==0){
+				draw(edge[Math.floor(Math.random()*4)]);
+				}else{
+				var winplaces2=9;
+				var maxSum2=0;
+				var nextstep3=9;
+				for(var i=0;i<obj.length;i++){
+					if(obj[i].number==0){
+						obj[i].number=1;
+						if(maxSum2<winplace(obj,1).sum){
+							maxSum2=winplace(obj,1).sum;
+							winplaces2=winplace(obj,1).place;
+							nextstep3=i;
+							obj[i].number=0;
+						}
+						obj[i].number=0;
+					}
+				}
+				if(winplaces2!=9){
+					draw(nextstep3);
+				}else{
+					for(var i=0;i<angle.length;i++){
+						if(obj[angle[i]].number==0){
+							nextstep3=angle[i];
+							break;
+						}
+					}
+					if(nextstep3!=9){
+						draw(nextstep3);
+						}else{					
+							for(var i=0;i<edge.length;i++){
+								if(obj[edge[i]].number==0){
+									nextstep3=edge[i];
+									break;
+								}
+							}
+							if(nextstep3!=9){
+							draw(nextstep3);
+							}else{
+								draw(4);
+							}
+							
+						}
+					
+				}
+			}
+			}
+		}
+	}
+
+	if(isWin(oG)==true){
+start=false;
+tellWin(actionPlayer);
+}else{
+if(full(oG)==true){
+start=false;
+alert("棋逢对手，将遇良才，大家势均力敌");
+}else{
+actionPlayer=1;
+step++;
+}
+}
+}
+};
+
+
+var easyComputer=function(){
+if(actionPlayer==2&&start==true){
+var nextStep=Math.floor(Math.random()*9);
+while(oG[nextStep].isFull==true){
+nextStep=Math.floor(Math.random()*9);
+}
+var oPic1=document.createElement('img');
+if(order==2){
+oPic1.src="images/2.jpg";
+oG[nextStep].number=2;
+}
+if(order==1){
+oPic1.src="images/1.jpg";
+oG[nextStep].number=2;
+}
+oG[nextStep].appendChild(oPic1);
+oPic1.style.height='80px';
+oPic1.style.width='80px';
+oG[nextStep].isFull=true;
+if(isWin(oG)==true){
+start=false;
+tellWin(actionPlayer);
+}else{
+if(full(oG)==true){
+start=false;
+alert("棋逢对手，将遇良才，大家势均力敌");
+}else{
+actionPlayer=1;
+}
+}
+}
+};
+
+var playereasy=function(){
+for(var i=0;i<oG.length;i++){
+oG[i].onclick=function(){
+if(start==true&&actionPlayer==1){
+if(this.isFull==false){
+var oPic=document.createElement('img');
+if(order==1){
+oPic.src="images/2.jpg";
+this.number=1;
+}
+if(order==2){
+oPic.src="images/1.jpg"
+this.number=1;
+}
+this.appendChild(oPic);
+oPic.style.height='80px';
+oPic.style.width='80px';
+this.isFull=true;
+if(isWin(oG)==true){
+start=false;
+tellWin(actionPlayer);
+}else{
+if(full(oG)==true){
+alert("棋逢对手，将遇良才，大家势均力敌");
+start=false;
+}else{
+actionPlayer=2;
+easyComputer();
+}
+}
+}
+}
+};
+}
+};
+
+var playerhard=function(){
+for(var i=0;i<oG.length;i++){
+oG[i].onclick=function(){
+if(start==true&&actionPlayer==1){
+if(this.isFull==false){
+var oPic=document.createElement('img');
+if(order==1){
+oPic.src="images/2.jpg";
+this.number=1;
+}
+if(order==2){
+oPic.src="images/1.jpg"
+this.number=1;
+}
+this.appendChild(oPic);
+oPic.style.height='80px';
+oPic.style.width='80px';
+this.isFull=true;
+if(isWin(oG)==true){
+start=false;
+tellWin(actionPlayer);
+}else{
+if(full(oG)==true){
+alert("棋逢对手，将遇良才，大家势均力敌");
+start=false;
+}else{
+step++;
+actionPlayer=2;
+laststep=this.key;
+if(isAngle(firststep)){
+anglefirst(oG);
+}
+if(firststep==4){
+centrefirst(oG);
+}
+}
+}
+}
+}
+};
+}
+};
+
+if(difficulty==1){
+easyComputer();
+playereasy();
+}
+
+if(difficulty==2){
+var centreOrAngle=Math.floor(Math.random()*2);
+if(centreOrAngle==0){
+firststep=angle[Math.floor(Math.random()*4)];
+anglefirst(oG);
+playerhard();
+}else{
+firststep=4;
+centrefirst(oG);
+playerhard();
+}
+}
+
+
+};
+
+}
+
+
+function isLine(obj,a,b,c){
+if(obj[a].number==1&&obj[b].number==1&&obj[c].number==1){
+return true;
+}
+if(obj[a].number==2&&obj[b].number==2&&obj[c].number==2){
+return true;
+}
+return false;
+}
+
+function isWin(obj){
+if(isLine(obj,0,1,2)){
+return true;
+}
+if(isLine(obj,3,4,5)){
+return true;
+}
+if(isLine(obj,6,7,8)){
+return true;
+}
+if(isLine(obj,1,4,7)){
+return true;
+}
+if(isLine(obj,2,5,8)){
+return true;
+}
+if(isLine(obj,0,3,6)){
+return true;
+}
+if(isLine(obj,0,4,8)){
+return true;
+}
+if(isLine(obj,2,4,6)){
+return true;
+}
+return false;
+}
+
+function full(obj){
+var full=true;
+for(var i=0;i<obj.length;i++){
+if(obj[i].isFull==false){
+full=false;
+break;
+}
+}
+if(full==true){
+return true;
+}
+return false;
+} 
+
+function tellWin(actionPlayer){
+//判断输赢，在isOver中输出结果
+if(actionPlayer==1){
+alert("恭喜大侠您胜利了");
+}else{
+alert("胜败乃兵家常事，请大侠重新再来");
+}
+}
+
+function isAngle(i){//判断所走的那一格是否角
+	if(i==0){
+		return true;
+	}
+	if(i==2){
+		return true;
+	}
+	if(i==6){
+		return true;
+	}
+	if(i==8){
+		return true;
+	}
+	return false;
+}
+
+function isEdge(i){//判断所走的那一格是否边
+	if(i==1){
+		return true;
+	}
+	if(i==3){
+		return true;
+	}
+	if(i==5){
+		return true;
+	}
+	if(i==7){
+		return true;
+	}
+	return false;
+}
+
+function winplace(obj,player){
+	var win={"place":9,"sum":0};
+	for(var i=0;i<obj.length;i++){
+		if(obj[i].number==0){
+			obj[i].number=player;
+			if(isWin(obj)){
+				win.place=i;
+				win.sum++;
+				obj[i].number=0;
+			}
+			obj[i].number=0;
+		}
+	}
+	return win;
+}
+
+
+
+
+
+</script>
+</head>
+<body>
+<div id="main">
+<div id="area">
+<div class="playground"></div>
+<div class="playground"></div>
+<div class="playground"></div>
+<div class="playground"></div>
+<div class="playground"></div>
+<div class="playground"></div>
+<div class="playground"></div>
+<div class="playground"></div>
+<div class="playground"></div>
+</div>
+<input id="start" type="button" value="开始"/>
+<div id="choice">
+</br>
+<form>
+&nbsp;<input type="radio" name="difficulty" value="easy" id="easy"/>容易
+<input type="radio" name="difficulty" value="hard" id="hard"/>困难
+<p></p>
+&nbsp;<input type="radio" name="order" value="first" id="first"/>先手
+<input type="radio" name="order" value="second" id="second"/>后手
+<form/>
+</div>
+</div>
+</body>
+</html>
